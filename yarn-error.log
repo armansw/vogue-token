@@ -1,0 +1,36 @@
+Arguments: 
+  /Users/rtdev-mac/.nvm/versions/node/v14.18.2/bin/node /usr/local/bin/yarn init
+
+PATH: 
+  /Users/rtdev-mac/.local/share/solana/install/active_release/bin:/Volumes/Data/Tools/:/Volumes/Data/Tools/solana-1.9.2/scripts/bin/:/Users/rtdev-mac/.nvm/versions/node/v14.18.2/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Volumes/Data/sdk/emulator:/Applications/VMware Fusion.app/Contents/Public:/Library/Apple/usr/bin:/Users/rtdev-mac/.cargo/bin:/Volumes/Data/sdk/platform-tools
+
+Yarn version: 
+  1.22.17
+
+Node version: 
+  14.18.2
+
+Platform: 
+  darwin x64
+
+Trace: 
+  Error: canceled
+      at Interface.<anonymous> (/usr/local/lib/node_modules/yarn/lib/cli.js:137143:13)
+      at Interface.emit (events.js:400:28)
+      at Interface._ttyWrite (readline.js:1001:16)
+      at ReadStream.onkeypress (readline.js:265:10)
+      at ReadStream.emit (events.js:400:28)
+      at emitKeys (internal/readline/utils.js:358:14)
+      at emitKeys.next (<anonymous>)
+      at ReadStream.onData (readline.js:1270:36)
+      at ReadStream.emit (events.js:400:28)
+      at addChunk (internal/streams/readable.js:293:12)
+
+npm manifest: 
+  No manifest
+
+yarn manifest: 
+  No manifest
+
+Lockfile: 
+  No lockfile
