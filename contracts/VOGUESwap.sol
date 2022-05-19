@@ -20,10 +20,10 @@ interface IERC20 {
     function approve(address spender, uint256 amount) external returns(bool);
 }
 
-contract VVSSwap {
+contract VOGUESwap {
     IUniswap uniswap;
     constructor(address _uniswap) {
-        uniswap = IUniswap(_uniswap);
+        uniswap = IUniswap(_uniswap); 
     }
 
     function swapTokensForETH(
