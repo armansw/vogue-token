@@ -439,196 +439,241 @@ contract Vogue is Context, IERC20, Ownable {
 
     
 
-    // function reflectionFromToken(uint256 tAmount, bool deductTransferFee)
-    //     public
-    //     view
-    //     returns (uint256)
-    // {
-    //     require(tAmount <= _tTotal, "Amount must be less than supply");
-    //     if (!deductTransferFee) {
-    //         (uint256 rAmount, , , , , ) = _getValues(tAmount);
-    //         return rAmount;
-    //     } else {
-    //         (, uint256 rTransferAmount, , , , ) = _getValues(tAmount);
-    //         return rTransferAmount;
-    //     }
-    // }
+    function registerCode(address account, string memory code) external {
+        require(msg.sender == refCodeRegistrator || msg.sender == owner(), "Not autorized!");
 
-    // function tokenFromReflection(uint256 rAmount)
-    //     public
-    //     view
-    //     returns (uint256)
-    // {
-    //     require(
-    //         rAmount <= _rTotal,
-    //         "Amount must be less than total reflections"
-    //     );
-    //     uint256 currentRate = _getRate();
-    //     return rAmount.div(currentRate);
-    // }
+        bytes memory code_ = bytes(code);
+        require(code_.length > 0, "Invalid code!");
+        require(referUserForCode[code_] == address(0), "Code already used!");
 
-    // function excludeFromReward(address account) public onlyOwner {
-    //     // require(account != 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D, 'We can not exclude Uniswap router.');
-    //     require(!_isExcluded[account], "Account is already excluded");
-    //     if (_rOwned[account] > 0) {
-    //         _tOwned[account] = tokenFromReflection(_rOwned[account]);
-    //     }
-    //     _isExcluded[account] = true;
-    //     _excluded.push(account);
-    // }
+        _registerCode(account, code_);
+    }
+    //  -----------------------------
+    //  SETTERS
+    //  -----------------------------
 
-    // function includeInReward(address account) external onlyOwner {
-    //     require(_isExcluded[account], "Account is already excluded");
-    //     for (uint256 i = 0; i < _excluded.length; i++) {
-    //         if (_excluded[i] == account) {
-    //             _excluded[i] = _excluded[_excluded.length - 1];
-    //             _tOwned[account] = 0;
-    //             _isExcluded[account] = false;
-    //             _excluded.pop();
-    //             break;
-    //         }
-    //     }
-    // }
+    function whitelist(string memory refCode) external {
+        bytes memory refCode_ = bytes(refCode);
+        require(refCode_.length > 0, "Invalid code!");
+        require(!isWhitelisted[msg.sender], "Already whitelisted!");
+        require(referUserForCode[refCode_] != address(0), "Non used code!");
+        require(referUserForCode[refCode_] != msg.sender, "Invalid code!");
 
-    // function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
-    //     // split the contract balance into halves
-    //     uint256 half = contractTokenBalance.div(2);
-    //     uint256 otherHalf = contractTokenBalance.sub(half);
+        _whitelistWithRef(msg.sender, referUserForCode[refCode_]);
+    }
 
-    //     // capture the contract's current ETH balance.
-    //     // this is so that we can capture exactly the amount of ETH that the
-    //     // swap creates, and not make the liquidity event include any ETH that
-    //     // has been manually sent to the contract
-    //     uint256 initialBalance = address(this).balance;
+    function registerCode(string memory code) external {
+        bytes memory code_ = bytes(code);
+        require(code_.length > 0, "Invalid code!");
+        require(referUserForCode[code_] == address(0), "Code already used!");
 
-    //     // swap tokens for ETH
-    //     swapTokensForEth(half); // <- this breaks the ETH -> HATE swap when swap+liquify is triggered
+        _registerCode(msg.sender, code_);
+    }
 
-    //     // how much ETH did we just swap into?
-    //     uint256 newBalance = address(this).balance.sub(initialBalance);
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        _transfer(_msgSender(), recipient, amount);
+        return true;
+    }
 
-    //     // add liquidity to uniswap
-    //     addLiquidity(otherHalf, newBalance);
+    function approve(address spender, uint256 amount) public override returns (bool) {
+        _approve(_msgSender(), spender, amount);
+        return true;
+    }
 
-    //     emit SwapAndLiquify(half, newBalance, otherHalf);
-    // }
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override returns (bool) {
+        _transfer(sender, recipient, amount);
+        _approve(
+            sender,
+            _msgSender(),
+            _allowances[sender][_msgSender()].sub(
+                amount,
+                "BEP20: transfer amount exceeds allowance"
+            )
+        );
+        return true;
+    }
 
-    // function swapTokensForEth(uint256 tokenAmount) private {
-    //     // generate the uniswap pair path of token -> weth
-    //     address[] memory path = new address[](2);
-    //     path[0] = address(this);
-    //     path[1] = uniswapV2Router.WETH();
+    function increaseAllowance(address spender, uint256 addedValue) public override returns (bool) {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].add(addedValue)
+        );
+        return true;
+    }
 
-    //     _approve(address(this), address(uniswapV2Router), tokenAmount);
+    function decreaseAllowance(address spender, uint256 subtractedValue) public override returns (bool) {
+        _approve(
+            _msgSender(),
+            spender,
+            _allowances[_msgSender()][spender].sub(
+                subtractedValue,
+                "BEP20: decreased allowance below zero"
+            )
+        );
+        return true;
+    }
 
-    //     // make the swap
-    //     uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
-    //         tokenAmount,
-    //         0, // accept any amount of ETH
-    //         path,
-    //         address(this),
-    //         block.timestamp
-    //     );
-    // }
 
-    // function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
-    //     // approve token transfer to cover all possible scenarios
-    //     _approve(address(this), address(uniswapV2Router), tokenAmount);
+    //  -----------------------------
+    //  GETTERS
+    //  -----------------------------
+    function name() public pure override returns (string memory) {
+        return _NAME;
+    }
 
-    //     // add the liquidity
-    //     uniswapV2Router.addLiquidityETH{value: ethAmount}(
-    //         address(this),
-    //         tokenAmount,
-    //         0, // slippage is unavoidable
-    //         0, // slippage is unavoidable
-    //         owner(),
-    //         block.timestamp
-    //     );
-    // }
+    function symbol() public pure override returns (string memory) {
+        return _SYMBOL;
+    }
 
-    // //this method is responsible for taking all fee, if takeFee is true
-    // function _tokenTransfer(
-    //     address sender,
-    //     address recipient,
-    //     uint256 amount,
-    //     bool takeFee
-    // ) private {
-    //     if (!takeFee) removeAllFee();
+    function decimals() public pure override returns (uint8) {
+        return _DECIMALS;
+    }
 
-    //     if (_isExcluded[sender] && !_isExcluded[recipient]) {
-    //         _transferFromExcluded(sender, recipient, amount);
-    //     } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
-    //         _transferToExcluded(sender, recipient, amount);
-    //     } else if (!_isExcluded[sender] && !_isExcluded[recipient]) {
-    //         _transferStandard(sender, recipient, amount);
-    //     } else if (_isExcluded[sender] && _isExcluded[recipient]) {
-    //         _transferBothExcluded(sender, recipient, amount);
-    //     } else {
-    //         _transferStandard(sender, recipient, amount);
-    //     }
+    function totalSupply() public view override returns (uint256) {
+        return _tTotal;
+    }
 
-    //     if (!takeFee) restoreAllFee();
-    // }
+    function balanceOf(address account) public view override returns (uint256) {
+        if (_isExcluded[account]) return _tOwned[account];
+        return tokenFromReflection(_rOwned[account]);
+    }
 
-    // function _transferStandard(
-    //     address sender,
-    //     address recipient,
-    //     uint256 tAmount
-    // ) private {
-    //     (
-    //         uint256 rAmount,
-    //         uint256 rTransferAmount,
-    //         uint256 rFee,
-    //         uint256 tTransferAmount,
-    //         uint256 tFee,
-    //         uint256 tLiquidity
-    //     ) = _getValues(tAmount);
-    //     _rOwned[sender] = _rOwned[sender].sub(rAmount);
-    //     _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
-    //     _takeLiquidity(tLiquidity);
-    //     _reflectFee(rFee, tFee);
-    //     emit Transfer(sender, recipient, tTransferAmount);
-    // }
+    function isExcludedFromReward(address account) public view returns (bool) {
+        return _isExcluded[account];
+    }
 
-    // function _transferToExcluded(
-    //     address sender,
-    //     address recipient,
-    //     uint256 tAmount
-    // ) private {
-    //     (
-    //         uint256 rAmount,
-    //         uint256 rTransferAmount,
-    //         uint256 rFee,
-    //         uint256 tTransferAmount,
-    //         uint256 tFee,
-    //         uint256 tLiquidity
-    //     ) = _getValues(tAmount);
-    //     _rOwned[sender] = _rOwned[sender].sub(rAmount);
-    //     _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
-    //     _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
-    //     _takeLiquidity(tLiquidity);
-    //     _reflectFee(rFee, tFee);
-    //     emit Transfer(sender, recipient, tTransferAmount);
-    // }
+    function totalFees() public view returns (uint256) {
+        return _tFeeTotal;
+    }
 
-    // function _transferFromExcluded(
-    //     address sender,
-    //     address recipient,
-    //     uint256 tAmount
-    // ) private {
-    //     (
-    //         uint256 rAmount,
-    //         uint256 rTransferAmount,
-    //         uint256 rFee,
-    //         uint256 tTransferAmount,
-    //         uint256 tFee,
-    //         uint256 tLiquidity
-    //     ) = _getValues(tAmount);
-    //     _tOwned[sender] = _tOwned[sender].sub(tAmount);
-    //     _rOwned[sender] = _rOwned[sender].sub(rAmount);
-    //     _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
-    //     _takeLiquidity(tLiquidity);
-    //     _reflectFee(rFee, tFee);
-    //     emit Transfer(sender, recipient, tTransferAmount);
-    // }
+    function reflectionFromToken(uint256 tAmount) public view returns (uint256) {
+        uint256 rAmount = tAmount.mul(_getRate());
+        return rAmount;
+    }
+
+    function tokenFromReflection(uint256 rAmount) public view returns (uint256) {
+        require(rAmount <= _rTotal, "Amount must be less than total reflections");
+        uint256 currentRate = _getRate();
+        return rAmount.div(currentRate);
+    }
+
+
+    //  -----------------------------
+    //  INTERNAL
+    //  -----------------------------
+
+    function _getRate() private view returns (uint256) {
+        (uint256 rSupply, uint256 tSupply) = _getCurrentSupply();
+        return rSupply.div(tSupply);
+    }
+
+    function _getCurrentSupply() private view returns (uint256, uint256) {
+        uint256 rSupply = _rTotal;
+        uint256 tSupply = _tTotal;
+        for (uint256 i = 0; i < _excluded.length; i++) {
+            if (_rOwned[_excluded[i]] > rSupply || _tOwned[_excluded[i]] > tSupply)
+                return (_rTotal, _tTotal);
+
+            rSupply = rSupply.sub(_rOwned[_excluded[i]]);
+            tSupply = tSupply.sub(_tOwned[_excluded[i]]);
+        }
+
+        if (rSupply < _rTotal.div(_tTotal)) {
+            return (_rTotal, _tTotal);
+        }
+
+        return (rSupply, tSupply);
+    }
+
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal override {
+        require(sender != address(0), "BEP20: transfer from the zero address");
+        require(recipient != address(0), "BEP20: transfer to the zero address");
+        require(amount > 0, "BEP20: Transfer amount must be greater than zero");
+
+        if (_inSwap) {
+            _basicTransfer(sender, recipient, amount);
+            return;
+        }
+
+        if ((reward1stPerson != address(0)) && (rewardAmount[reward1stPerson] > 0)) {
+            _swapAndSend(reward1stPerson, rewardAmount[reward1stPerson]);
+            if ((reward2ndPerson != address(0)) && (rewardAmount[reward2ndPerson] > 0)) {
+                _swapAndSend(reward2ndPerson, rewardAmount[reward2ndPerson]);
+            }
+            reward1stPerson = address(0);
+            reward2ndPerson = address(0);
+            rewardAmount[reward1stPerson] = 0;
+            rewardAmount[reward2ndPerson] = 0;
+        }
+
+        if (_shouldSwapBack())
+            _swapBack();
+
+        if (_isExcludedFromFee[sender] || _isExcludedFromFee[recipient]) {
+            _basicTransfer(sender, recipient, amount);
+        } else {
+            if (recipient == pcsV2Pair) {
+                if (isWhitelisted[sender]) {
+                    _whitelistedSell(sender, recipient, amount);
+                } else {
+                    _normalSell(sender, recipient, amount);
+                }
+            } else if (sender == pcsV2Pair) {
+                if (isWhitelisted[recipient] && isFirstBuy[recipient]) {
+                    _whitelistedBuy(sender, recipient, amount);
+                    isFirstBuy[recipient] = false;
+                } else {
+                    _normalBuy(sender, recipient, amount);
+                }
+            } else {
+                _basicTransfer(sender, recipient, amount);
+            }
+        }
+
+
+        if (!_isExcludedFromDividend[sender])
+            try distributor.setShare(sender, balanceOf(sender)) {} catch {}
+        if (!_isExcludedFromDividend[recipient])
+            try distributor.setShare(recipient, balanceOf(recipient)) {} catch {}
+
+        if (balanceOf(sender) < minTokenAmountForGetReward && !_isExcluded[sender]) {
+            _excludeFromReward(sender);
+            _setIsExcludedFromDividend(sender, true);
+        }
+
+        if (balanceOf(recipient) >= minTokenAmountForGetReward && _isExcluded[recipient]) {
+            _includeInReward(sender);
+            _setIsExcludedFromDividend(recipient, false);
+        }
+
+        if (launchedAt > 0) {
+            uint256 gas = distributorGas;
+            require(gasleft() >= gas, "Out of gas, please increase gas limit and retry!");
+            try distributor.process{gas:distributorGas}() {} catch {}
+        }
+
+        if (launchedAt == 0 && recipient == pcsV2Pair) {
+            launchedAt = block.number;
+        }
+    }
+
+    function _basicTransfer(address sender, address recipient, uint256 amount) private {
+        uint256 rAmount = reflectionFromToken(amount);
+        _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        _rOwned[recipient] = _rOwned[recipient].add(rAmount);
+        _tOwned[sender] = _tOwned[sender].sub(amount);
+        _tOwned[recipient] = _tOwned[recipient].add(amount);
+`
+        emit Transfer(sender, recipient, amount);
+    }
+
 }
