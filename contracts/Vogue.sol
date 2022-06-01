@@ -676,4 +676,257 @@ contract Vogue is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, amount);
     }
 
+
+    function _normalBuy(address sender, address recipient, uint256 amount) private {
+        uint256 currentRate = _getRate();
+        uint256 rAmount = amount.mul(currentRate);
+        uint256 rBNBreflectionFee = amount.div(100).mul(BNBreflectionFeeOnBuy).mul(currentRate);
+        uint256 rLiquidityFee = amount.div(100).mul(liquidityFeeOnBuy).mul(currentRate);
+        uint256 rHuhdistributionFee = amount.div(100).mul(HuHdistributionFeeOnBuy).mul(currentRate);
+        uint256 rMarketingFee = amount.div(100).mul(marketingFeeOnBuy).mul(currentRate);
+        uint256 rTransferAmount = rAmount.sub(rBNBreflectionFee).sub(rLiquidityFee).sub(rHuhdistributionFee).sub(rMarketingFee);
+        _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        _rOwned[address(this)] = _rOwned[address(this)].add(rBNBreflectionFee).add(rLiquidityFee);
+        _tOwned[sender] = _tOwned[sender].sub(amount);
+        _tOwned[recipient] = _tOwned[recipient].add(rTransferAmount.div(currentRate));
+        _tOwned[address(this)] = _tOwned[address(this)].add(rBNBreflectionFee.div(currentRate)).add(rLiquidityFee.div(currentRate));
+        _liquidityAccumulated = _liquidityAccumulated.add(rLiquidityFee.div(currentRate));
+        _rOwned[marketingFeeReceiver] = _rOwned[marketingFeeReceiver].add(rMarketingFee);
+        _tOwned[marketingFeeReceiver] = _tOwned[marketingFeeReceiver].add(rMarketingFee.div(currentRate));
+
+        emit Transfer(sender, recipient, rTransferAmount.div(currentRate));
+        emit Transfer(sender, address(this), (rBNBreflectionFee.add(rLiquidityFee)).div(currentRate));
+        emit Transfer(sender, marketingFeeReceiver, rMarketingFee.div(currentRate));
+
+        _reflectFee(rHuhdistributionFee, rHuhdistributionFee.div(currentRate));
+    }
+
+    function _whitelistedBuy(address sender, address recipient, uint256 amount) private {
+        if (referParent[referParent[recipient]] == address(0)) {
+            uint256 currentRate = _getRate();
+            uint256 rAmount = amount.mul(currentRate);
+            uint256 rBNBreward1stPerson = amount.div(100).mul(BNBrewardFor1stPerson_A).mul(currentRate);
+            uint256 rLiquidityFee = amount.div(100).mul(liquidityFeeOnBuyWhiteListed_A).mul(currentRate);
+            uint256 rHuhdistributionFee = amount.div(100).mul(HuHdistributionFeeOnBuyWhiteListed_A).mul(currentRate);
+            uint256 rMarketingFee = amount.div(100).mul(marketingFeeOnBuyWhiteListed_A).mul(currentRate);
+            uint256 rTransferAmount = rAmount.sub(rBNBreward1stPerson).sub(rLiquidityFee).sub(rHuhdistributionFee).sub(rMarketingFee);
+            _rOwned[sender] = _rOwned[sender].sub(rAmount);
+            _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+            _rOwned[address(this)] = _rOwned[address(this)].add(rBNBreward1stPerson).add(rLiquidityFee);
+            _tOwned[sender] = _tOwned[sender].sub(amount);
+            _tOwned[recipient] = _tOwned[recipient].add(rTransferAmount.div(currentRate));
+            _tOwned[address(this)] = _tOwned[address(this)].add(rBNBreward1stPerson.div(currentRate)).add(rLiquidityFee.div(currentRate));
+            reward1stPerson = referParent[recipient];
+            rewardAmount[reward1stPerson] = rBNBreward1stPerson.div(currentRate);
+            _liquidityAccumulated = _liquidityAccumulated.add(rLiquidityFee.div(currentRate));
+            _rOwned[marketingFeeReceiver] = _rOwned[marketingFeeReceiver].add(rMarketingFee);
+            _tOwned[marketingFeeReceiver] = _tOwned[marketingFeeReceiver].add(rMarketingFee.div(currentRate));
+
+            emit Transfer(sender, recipient, rTransferAmount.div(currentRate));
+            emit Transfer(sender, address(this), (rBNBreward1stPerson.add(rLiquidityFee)).div(currentRate));
+            emit Transfer(sender, marketingFeeReceiver, rMarketingFee.div(currentRate));
+
+            _reflectFee(rHuhdistributionFee, rHuhdistributionFee.div(currentRate));
+        } else {
+            uint256 currentRate = _getRate();
+            uint256 rAmount = amount.mul(currentRate);
+            uint256 rBNBreward1stPerson = amount.div(100).mul(BNBrewardFor1stPerson_B).mul(currentRate);
+            uint256 rBNBreward2ndPerson = amount.div(100).mul(BNBrewardFor2ndPerson_B).mul(currentRate);
+            uint256 rLiquidityFee = amount.div(100).mul(liquidityFeeOnBuyWhiteListed_B).mul(currentRate);
+            uint256 rHuhdistributionFee = amount.div(100).mul(HuHdistributionFeeOnBuyWhiteListed_B).mul(currentRate);
+            uint256 rMarketingFee = amount.div(100).mul(marketingFeeOnBuyWhiteListed_B).mul(currentRate);
+            uint256 rTransferAmount = rAmount.sub(rBNBreward1stPerson);
+            rTransferAmount = rTransferAmount.sub(rBNBreward2ndPerson).sub(rLiquidityFee).sub(rHuhdistributionFee).sub(rMarketingFee);
+            _rOwned[sender] = _rOwned[sender].sub(rAmount);
+            _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+            _rOwned[address(this)] = _rOwned[address(this)].add(rBNBreward1stPerson).add(rBNBreward2ndPerson).add(rLiquidityFee);
+            _tOwned[sender] = _tOwned[sender].sub(amount);
+            _tOwned[recipient] = _tOwned[recipient].add(rTransferAmount.div(currentRate));
+            _tOwned[address(this)] = _tOwned[address(this)].add(rBNBreward1stPerson.div(currentRate)).add(rBNBreward2ndPerson.div(currentRate)).add(rLiquidityFee.div(currentRate));
+            reward1stPerson = referParent[recipient];
+            reward2ndPerson = referParent[referParent[recipient]];
+            rewardAmount[reward1stPerson] = rBNBreward1stPerson.div(currentRate);
+            rewardAmount[reward2ndPerson] = rBNBreward2ndPerson.div(currentRate);
+            _liquidityAccumulated = _liquidityAccumulated.add(rLiquidityFee.div(currentRate));
+            _rOwned[marketingFeeReceiver] = _rOwned[marketingFeeReceiver].add(rMarketingFee);
+            _tOwned[marketingFeeReceiver] = _tOwned[marketingFeeReceiver].add(rMarketingFee.div(currentRate));
+
+            emit Transfer(sender, recipient, rTransferAmount.div(currentRate));
+            emit Transfer(sender, address(this), (rBNBreward1stPerson.add(rBNBreward2ndPerson).add(rLiquidityFee)).div(currentRate));
+            emit Transfer(sender, marketingFeeReceiver, rMarketingFee.div(currentRate));
+
+            _reflectFee(rHuhdistributionFee, rHuhdistributionFee.div(currentRate));
+        }
+    }
+
+    function _normalSell(address sender, address recipient, uint256 amount) private {
+        uint256 currentRate = _getRate();
+        uint256 rAmount = amount.mul(currentRate);
+        uint256 rBNBreflectionFee = amount.div(100).mul(BNBreflectionFeeOnSell).mul(currentRate);
+        uint256 rLiquidityFee = amount.div(100).mul(liquidityFeeOnSell).mul(currentRate);
+        uint256 rHuhdistributionFee = amount.div(100).mul(HuHdistributionFeeOnSell).mul(currentRate);
+        uint256 rMarketingFee = amount.div(100).mul(marketingFeeOnSell).mul(currentRate);
+        uint256 rTransferAmount = rAmount.sub(rBNBreflectionFee).sub(rLiquidityFee).sub(rHuhdistributionFee).sub(rMarketingFee);
+        _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        _rOwned[address(this)] = _rOwned[address(this)].add(rBNBreflectionFee).add(rLiquidityFee);
+        _tOwned[sender] = _tOwned[sender].sub(amount);
+        _tOwned[recipient] = _tOwned[recipient].add(rTransferAmount.div(currentRate));
+        _tOwned[address(this)] = _tOwned[address(this)].add(rBNBreflectionFee.div(currentRate)).add(rLiquidityFee.div(currentRate));
+        _liquidityAccumulated = _liquidityAccumulated.add(rLiquidityFee.div(currentRate));
+        _rOwned[marketingFeeReceiver] = _rOwned[marketingFeeReceiver].add(rMarketingFee);
+        _tOwned[marketingFeeReceiver] = _tOwned[marketingFeeReceiver].add(rMarketingFee.div(currentRate));
+
+        emit Transfer(sender, recipient, rTransferAmount.div(currentRate));
+        emit Transfer(sender, address(this), (rBNBreflectionFee.add(rLiquidityFee)).div(currentRate));
+        emit Transfer(sender, marketingFeeReceiver, rMarketingFee.div(currentRate));
+
+        _reflectFee(rHuhdistributionFee, rHuhdistributionFee.div(currentRate));
+    }
+
+    function _whitelistedSell(address sender, address recipient, uint256 amount) private {
+        uint256 currentRate = _getRate();
+        uint256 rAmount = amount.mul(currentRate);
+        uint256 rBNBreflectionFee = amount.div(100).mul(BNBreflectionFeeOnSellWhiteListed).mul(currentRate);
+        uint256 rLiquidityFee = amount.div(100).mul(liquidityFeeOnSellWhiteListed).mul(currentRate);
+        uint256 rHuhdistributionFee = amount.div(100).mul(HuHdistributionFeeOnSellWhiteListed).mul(currentRate);
+        uint256 rMarketingFee = amount.div(100).mul(marketingFeeOnSellWhiteListed).mul(currentRate);
+        uint256 rTransferAmount = rAmount.sub(rBNBreflectionFee).sub(rLiquidityFee).sub(rHuhdistributionFee).sub(rMarketingFee);
+        _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        _rOwned[address(this)] = _rOwned[address(this)].add(rBNBreflectionFee).add(rLiquidityFee);
+        _tOwned[sender] = _tOwned[sender].sub(amount);
+        _tOwned[recipient] = _tOwned[recipient].add(rTransferAmount.div(currentRate));
+        _tOwned[address(this)] = _tOwned[address(this)].add(rBNBreflectionFee.div(currentRate)).add(rLiquidityFee.div(currentRate));
+        _liquidityAccumulated = _liquidityAccumulated.add(rLiquidityFee.div(currentRate));
+        _rOwned[marketingFeeReceiver] = _rOwned[marketingFeeReceiver].add(rMarketingFee);
+        _tOwned[marketingFeeReceiver] = _tOwned[marketingFeeReceiver].add(rMarketingFee.div(currentRate));
+
+        emit Transfer(sender, recipient, rTransferAmount.div(currentRate));
+        emit Transfer(sender, address(this), (rBNBreflectionFee.add(rLiquidityFee)).div(currentRate));
+        emit Transfer(sender, marketingFeeReceiver, rMarketingFee.div(currentRate));
+
+        _reflectFee(rHuhdistributionFee, rHuhdistributionFee.div(currentRate));
+    }
+
+    function _swapAndSend(address recipient, uint256 amount) private swapping {
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = pcsV2Router.WETH();
+
+        pcsV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amount,
+            0,
+            path,
+            recipient,
+            block.timestamp
+        );
+    }
+
+    function _shouldSwapBack() private view returns (bool) {
+        return msg.sender != pcsV2Pair
+            && launchedAt > 0
+            && !_inSwap
+            && swapEnabled
+            && balanceOf(address(this)) >= swapThreshold;
+    }
+
+    function _swapBack() private swapping {
+        uint256 amountToSwap = _liquidityAccumulated.div(2);
+
+        address[] memory path = new address[](2);
+        path[0] = address(this);
+        path[1] = pcsV2Router.WETH();
+
+        uint256 balanceBefore = address(this).balance;
+
+        pcsV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountToSwap,
+            0,
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        uint256 differenceBnb = address(this).balance.sub(balanceBefore);
+
+        pcsV2Router.addLiquidityETH{value: differenceBnb}(
+            address(this),
+            amountToSwap,
+            0,
+            0,
+            _DEAD_ADDRESS,
+            block.timestamp
+        );
+
+        emit SwapAndLiquify(differenceBnb, amountToSwap);
+
+        amountToSwap = balanceOf(address(this));
+        pcsV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
+            amountToSwap,
+            0,
+            path,
+            address(this),
+            block.timestamp
+        );
+
+        _liquidityAccumulated = 0;
+
+        differenceBnb = address(this).balance;
+        try distributor.deposit{value: differenceBnb}() {} catch {}
+    }
+
+    function _reflectFee(uint256 rFee, uint256 tFee) private {
+        _rTotal = _rTotal.sub(rFee);
+        _tFeeTotal = _tFeeTotal.add(tFee);
+    }
+
+    function _excludeFromReward(address account) private {
+        require(!_isExcluded[account], "Account is already excluded");
+
+        if (_rOwned[account] > 0) {
+            _tOwned[account] = tokenFromReflection(_rOwned[account]);
+        }
+        _isExcluded[account] = true;
+        _excluded.push(account);
+    }
+
+    function _includeInReward(address account) private {
+        require(_isExcluded[account], "Account is already included");
+        for (uint256 i = 0; i < _excluded.length; i++) {
+            if (_excluded[i] == account) {
+                _excluded[i] = _excluded[_excluded.length - 1];
+                _tOwned[account] = 0;
+                _rOwned[account] = reflectionFromToken(_tOwned[account]);
+                _isExcluded[account] = false;
+                _excluded.pop();
+                break;
+            }
+        }
+    }
+
+    function _setIsExcludedFromFee(address account, bool flag) private {
+        _isExcludedFromFee[account] = flag;
+    }
+
+    function _setIsExcludedFromDividend(address account, bool flag) private {
+        _isExcludedFromDividend[account] = flag;
+    }
+
+    function _whitelistWithRef(address account, address referee) private {
+        isFirstBuy[account] = true;
+        isWhitelisted[msg.sender] = true;
+        referParent[msg.sender] = referee;
+
+        emit UserWhitelisted(account, referee);
+    }
+
+    function _registerCode(address account, bytes memory code) private {
+        referUserForCode[code] = account;
+        referCodeForUser[account] = code;
+
+        emit CodeRegisterred(account, code);
+    }
+
 }
