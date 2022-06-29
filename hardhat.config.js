@@ -43,13 +43,14 @@ module.exports = {
     },
     hardhat: {
       // hardfork: "london",
-      // allowUnlimitedContractSize: true,
-      // settings: {
-      //   optimizer: {
-      //     enabled: true,
-      //     runs: 9999,
-      //   },
-      // },
+      allowUnlimitedContractSize: true,
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 9999,
+        },
+      },
+      initialBaseFeePerGas: 0,
       // evmVersion: "byzantium",
       // forking: {
       //   url: "https://eth-rinkeby.alchemyapi.io/v2/8SAQa7xMc0VXTR_hyfPvAt2pe3QrXybB",

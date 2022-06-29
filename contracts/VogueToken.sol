@@ -19,7 +19,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IUniswap.sol";
 import "hardhat/console.sol";
 
-
 contract VogueToken is Context, ERC20, Ownable {
     using SafeMath for uint256;
 
@@ -31,8 +30,6 @@ contract VogueToken is Context, ERC20, Ownable {
     uint256 private constant _tTotal = 10**9 * (10**_DECIMALS); // 1 Billion VogueToken
     uint256 private _rTotal = (_MAX - (_MAX % _tTotal));
     uint256 private _tFeeTotal;
-
-    
 
     uint8 public liquidityFeeOnBuy = 2;
     uint8 public treasuryFeeOnBuy = 2;
@@ -49,10 +46,8 @@ contract VogueToken is Context, ERC20, Ownable {
     uint256 public launchedAt;
 
     // State data for statistical purposes ONLY
-
     address public treasuryWallet;
-    address private constant _DEAD_ADDRESS =
-        0x000000000000000000000000000000000000dEaD;
+    address private constant _DEAD_ADDRESS = 0x000000000000000000000000000000000000dEaD;
 
     mapping(address => uint256) private _rOwned;
     mapping(address => uint256) private _tOwned;
@@ -65,11 +60,8 @@ contract VogueToken is Context, ERC20, Ownable {
     IUniswapV2Router02 public uniV2Router;
     address public uniV2Pair;
 
-    
-
     uint256 public maxTxAmount = _tTotal.mul(1).div(10**2); // 1% of total supply
-    uint256 public amountOfTokensToAddToLiquidityThreshold =
-        maxTxAmount.mul(10).div(10**2); // 10% of max transaction amount
+    uint256 public amountOfTokensToAddToLiquidityThreshold = maxTxAmount.mul(10).div(10**2); // 10% of max transaction amount
 
     bool public swapAndLiquifyEnabled = true;
     bool private _inSwap;
@@ -79,62 +71,39 @@ contract VogueToken is Context, ERC20, Ownable {
         _inSwap = false;
     }
 
-    event SwapAndLiquify(
-        uint256 indexed ethReceived,
-        uint256 indexed tokensIntoLiqudity
-    );
+    event SwapAndLiquify( uint256 indexed ethReceived, uint256 indexed tokensIntoLiqudity );
     event UpdateUniSwapRouter(address indexed uniV2Router);
     event UpdateSwapAndLiquifyEnabled(bool indexed swapAndLiquifyEnabled);
     event ExcludeFromReflection(address indexed account);
     event IncludeInReflection(address indexed account);
     event SetIsExcludedFromFee(address indexed account, bool indexed flag);
-    event ChangeFeesForNormalBuy(
-        uint8 indexed liquidityFeeOnBuy,
-        uint8 indexed treasuryFeeOnBuy,
-        uint8 indexed VoguedistributionFeeOnBuy
-    );
-
-    event ChangeFeesForNormalSell(
-        uint8 indexed liquidityFeeOnSell,
-        uint8 indexed treasuryFeeOnSell,
-        uint8 indexed VoguedistributionFeeOnSell
-    );
-
+    event ChangeFeesForNormalBuy( uint8 indexed liquidityFeeOnBuy, uint8 indexed treasuryFeeOnBuy, uint8 indexed VoguedistributionFeeOnBuy );
+    event ChangeFeesForNormalSell( uint8 indexed liquidityFeeOnSell, uint8 indexed treasuryFeeOnSell, uint8 indexed VoguedistributionFeeOnSell );
     event UpdateTreasuryWallet(address indexed treasuryWallet);
-
-    event UpdateAmountOfTokensToAddToLiquidityThreshold(
-        uint256 indexed amountOfTokensToAddToLiquidityThreshold
-    );
+    event UpdateAmountOfTokensToAddToLiquidityThreshold( uint256 indexed amountOfTokensToAddToLiquidityThreshold );
     event SetMaxTxPercent(uint256 indexed maxTxPercent);
 
-    constructor(
-        address memory _trasuryWalletAddress,
-        address memory _uniswapV2Router02Address
-    ) {
+    constructor( address _treasuryWalletAddress, address _uniswapV2Router02Address ) ERC20(_NAME, _SYMBOL) {
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
             _uniswapV2Router02Address
         );
-
         uniV2Pair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
             address(this),
             _uniswapV2Router.WETH()
         );
         uniV2Router = _uniswapV2Router;
         _allowances[address(this)][address(uniV2Router)] = _MAX;
-
-        treasuryWallet = _trasuryWalletAddress;
-
+        treasuryWallet = _treasuryWalletAddress;
         _rOwned[msg.sender] = _rTotal;
+        console.log('_rOwned[msg.sender]', _rTotal);
         _isExcludedFromFee[msg.sender] = true;
         _isExcludedFromFee[address(this)] = true;
         _isExcludedFromFee[treasuryWallet] = true;
         _excludeFromReflection(treasuryWallet);
-
         emit Transfer(address(0), msg.sender, _tTotal);
     }
 
     receive() external payable {}
-
     fallback() external payable {}
 
     // Back-Up withdraw, in case ETH gets sent in here
@@ -290,17 +259,13 @@ contract VogueToken is Context, ERC20, Ownable {
     //  SETTERS
     //  -----------------------------
 
-    function transfer(address recipient, uint256 amount)
-        external
-        override
-        returns (bool)
-    {
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
 
     function approve(address spender, uint256 amount)
-        external
+        public
         override
         returns (bool)
     {
@@ -312,7 +277,7 @@ contract VogueToken is Context, ERC20, Ownable {
         address sender,
         address recipient,
         uint256 amount
-    ) external override returns (bool) {
+    ) public override returns (bool) {
         _transfer(sender, recipient, amount);
         _approve(
             sender,
@@ -326,9 +291,7 @@ contract VogueToken is Context, ERC20, Ownable {
     }
 
     function increaseAllowance(address spender, uint256 addedValue)
-        external
-        virtual
-        returns (bool)
+        public override returns (bool)
     {
         _approve(
             _msgSender(),
@@ -339,9 +302,7 @@ contract VogueToken is Context, ERC20, Ownable {
     }
 
     function decreaseAllowance(address spender, uint256 subtractedValue)
-        external
-        virtual
-        returns (bool)
+        public override returns (bool)
     {
         _approve(
             _msgSender(),
@@ -357,19 +318,19 @@ contract VogueToken is Context, ERC20, Ownable {
     //  -----------------------------
     //  GETTERS
     //  -----------------------------
-    function name() external pure override returns (string memory) {
+    function name() public pure override returns (string memory) {
         return _NAME;
     }
 
-    function symbol() external pure override returns (string memory) {
+    function symbol() public pure override returns (string memory) {
         return _SYMBOL;
     }
 
-    function decimals() external pure override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return _DECIMALS;
     }
 
-    function totalSupply() external pure override returns (uint256) {
+    function totalSupply() public pure override returns (uint256) {
         return _tTotal;
     }
 
@@ -379,7 +340,7 @@ contract VogueToken is Context, ERC20, Ownable {
     }
 
     function allowance(address owner, address spender)
-        external
+        public
         view
         override
         returns (uint256)
@@ -388,7 +349,7 @@ contract VogueToken is Context, ERC20, Ownable {
     }
 
     function isExcludedFromReflection(address account)
-        external
+        public
         view
         returns (bool)
     {
@@ -457,7 +418,7 @@ contract VogueToken is Context, ERC20, Ownable {
         address owner,
         address spender,
         uint256 amount
-    ) private {
+    ) internal override {
         require(owner != address(0), "ERC20: approve from the zero address");
         require(spender != address(0), "ERC20: approve to the zero address");
 
@@ -469,7 +430,7 @@ contract VogueToken is Context, ERC20, Ownable {
         address sender,
         address recipient,
         uint256 amount
-    ) private {
+    ) internal override {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
         require(amount > 0, "ERC20: Transfer amount must be greater than zero");
