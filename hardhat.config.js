@@ -27,8 +27,18 @@ const accounts = {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.4",
-  defaultNetwork: "hardhat",
+  
+  defaultNetwork: "rinkeby",
+
+  solidity: {
+    version: "0.8.4",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
+    }
+  },
   namedAccounts: {
     deployer: {
       default: 0,
@@ -64,10 +74,11 @@ module.exports = {
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts,
+    
       chainId: 4,
+      allowUnlimitedContractSize: true,
       live: false,
       saveDeployments: true,
-      tags: ["mock-vogue"],
       gasPrice: 5000000000,
       gasMultiplier: 2,
     },
@@ -76,6 +87,28 @@ module.exports = {
     deploy: "deploy",
     deployments: "deployments",
     sources: "contracts",
-    tests: "test"
+    tests: "test",
+    artifacts: "./artifacts",
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
+    // {
+    //   polygon: process.env.POLYGONSCAN_API_KEY,
+    //   polygonMumbai: process.env.POLYGONSCAN_API_KEY,
+    //   rinkeby: "YOUR_ETHERSCAN_API_KEY",
+    //   mainnet: "YOUR_ETHERSCAN_API_KEY",
+    // }
+  },
+
+  abiExporter: [
+    {
+      path: './abi/pretty',
+      pretty: true,
+    },
+    {
+      path: './abi/ugly',
+      pretty: false,
+    },
+  ]
+
 };

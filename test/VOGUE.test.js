@@ -30,7 +30,7 @@ describe("VOGUEToken Test", async function () {
     weth = await new ethers.ContractFactory(weth9.abi, weth9.bytecode, owner).deploy();
     await weth.deployed();
 
-
+    
     // --- uniswap factory
 
     factory = await new ethers.ContractFactory(

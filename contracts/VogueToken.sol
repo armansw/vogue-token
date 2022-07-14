@@ -17,7 +17,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IUniswap.sol";
-import "hardhat/console.sol";
 
 contract VogueToken is Context, ERC20, Ownable {
     using SafeMath for uint256;
@@ -95,7 +94,7 @@ contract VogueToken is Context, ERC20, Ownable {
         _allowances[address(this)][address(uniV2Router)] = _MAX;
         treasuryWallet = _treasuryWalletAddress;
         _rOwned[msg.sender] = _rTotal;
-        console.log('_rOwned[msg.sender]', _rTotal);
+        
         _isExcludedFromFee[msg.sender] = true;
         _isExcludedFromFee[address(this)] = true;
         _isExcludedFromFee[treasuryWallet] = true;

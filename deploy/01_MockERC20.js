@@ -7,9 +7,9 @@ module.exports = async function ({ ethers, getNamedAccounts, deployments, getCha
   await deploy('MockERC20', {
     from: deployer,
     log: true,
-    args: ['VOGUE', 'VOGUE'],
+    args: ['pToken', 'pToken'],
     deterministicDeployment: false
   });
 };
 
-module.exports.tags = ['MockERC20', 'VOGUE'];
+module.exports.tags = ['MockERC20', 'pToken'];
