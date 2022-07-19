@@ -26,7 +26,7 @@ contract VogueToken is Context, ERC20, Ownable {
     uint8 private constant _DECIMALS = 18;
 
     uint256 private constant _MAX = ~uint256(0);
-    uint256 private constant _tTotal = 10*10**9 * (10**_DECIMALS); // 1 Billion VogueToken
+    uint256 private constant _tTotal = 10*10**9 * (10**_DECIMALS); // 10 Billion VogueToken
     uint256 private _rTotal = (_MAX - (_MAX % _tTotal));
     uint256 private _tFeeTotal;
 

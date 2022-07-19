@@ -25,7 +25,6 @@
     "test": "npx hardhat test",
     "refresh": "npx hardhat clean; npx hardhat compile;",
     "deploy": "npx hardhat deploy",
-    "verify:mocrkerc20": "node verify/01_MockERC20.js",
-    "verify:vogue": "node verify/02_VogueToken.js"
+    "verify": "npx hardhat etherscan-verify "
   }
 }

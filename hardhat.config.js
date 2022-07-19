@@ -82,6 +82,19 @@ module.exports = {
       gasPrice: 5000000000,
       gasMultiplier: 2,
     },
+    mainnet: {
+      url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
+      accounts,
+      chainId: 1,
+      live: false,
+      settings: {
+        optimizer: {
+          enabled: true,
+          runs: 200,
+        },
+      },
+      saveDeployments: true
+    },
   },
   paths: {
     deploy: "deploy",
