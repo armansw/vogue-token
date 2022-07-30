@@ -7,3 +7,5 @@ deployments
 #Hardhat files
 cache
 artifacts
+.vscode
+yarn.lock
